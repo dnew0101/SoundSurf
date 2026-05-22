@@ -10,3 +10,8 @@ Key files to build first (in order):
 4. client/src/components/GameCanvas.jsx — R3F <Canvas> with a <PerspectiveCamera>, basic lighting, and a stub <RaceTrack>. Get something rendering before wiring audio.
 
 5. server/controllers/trackController.js — the BPM-to-geometry transformer. Takes { bpm, beatGrid, energy, valence } and returns spline control points + an obstacle schedule. This is where AudioSurf-style track shaping lives.
+
+
+
+Car asset: https://sketchfab.com/3d-models/2019-porsche-911-9912-gt3-rs-97ea84db846e4945961dffb8b2d7af18
+Roadtile asset: https://sketchfab.com/3d-models/road--avenue--street-7f657c3eceb343ceaf5e542c50dab27a
