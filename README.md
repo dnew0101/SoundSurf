@@ -1,17 +1,13 @@
 # SoundSurf
-Hackathon Project that generates a racing game based on the audio file it's fed.
+Key files to build first (in order):
 
-Frontend:
-npm create vite@latest --> React frontend
-R3F dependency --> 3D objects for gameplay
+1. wasm/audio_processor.c + Makefile — compile with emcc to get audio_processor.wasm into client/public/wasm/.
+  This is your critical path; nothing else can be tested end-to-end without it.
 
-Backend:
-npm install express --save --> Express Backend
+2.server/index.js + routes/spotify.js — stand up Express, add the Spotify OAuth token exchange proxy so the client never exposes credentials. Spotify's /audio-features endpoint gives you tempo, energy, valence, time_signature for free — use those as fallback when the WASM analysis isn't done yet.
 
-WebDSP:
-heavy functionally processing in WebAssembly.
+3. client/src/hooks/useAudioAnalysis.js — the WASM loader. Instantiate via WebAssembly.instantiateStreaming, expose a processAudio(audioBuffer) → { bpm, beatGrid } function that R3F hooks can call.
 
-Spotify API:
-Calls the audio track, if possible, to parse in the WebDSP.
+4. client/src/components/GameCanvas.jsx — R3F <Canvas> with a <PerspectiveCamera>, basic lighting, and a stub <RaceTrack>. Get something rendering before wiring audio.
 
-Goal is to have a game that parses audio data to pull BPM and rhythm, akin to AudioSurf, with a 3D gameplay race. backend should contain logic for game, frontend should contain the rendering logic and Canvas component for the racing.
+5. server/controllers/trackController.js — the BPM-to-geometry transformer. Takes { bpm, beatGrid, energy, valence } and returns spline control points + an obstacle schedule. This is where AudioSurf-style track shaping lives.
