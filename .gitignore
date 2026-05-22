@@ -1,0 +1,19 @@
+# Environment variables
+.env
+server/.env
+
+# Node modules
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Build output
+dist/
+client/dist/
+
+# WASM build output
+client/public/wasm/*.wasm
+*.o
+
+# OS files
+.DS_Store
