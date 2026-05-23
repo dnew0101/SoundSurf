@@ -11,6 +11,7 @@ import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import { roadState } from '../utils/roadState'
 import { getRoadPoint, getRoadFrame } from '../utils/roadCurve'
 import { roadParams } from '../utils/distortion'
+import { HUD } from './HUD'
 
 const _camPos = new THREE.Vector3()
 const _lookTarget = new THREE.Vector3()
@@ -101,6 +102,7 @@ export default function GameCanvas() {
 
   return (
     <>
+     <HUD />
       <Canvas
         style={{ position: 'fixed', inset: 0, zIndex: 0 }}
         gl={{ antialias: true }}
