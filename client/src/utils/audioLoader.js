@@ -27,3 +27,29 @@ export async function loadAndParseAudio(mp3Url) {
 
   return { audioCtx, audioBuffer, targets, trackLength }
 }
+
+/**
+ * Load a user-uploaded File object (from <input type="file"> or drag-and-drop).
+ * Reads the file as ArrayBuffer, decodes it, runs Meyda analysis,
+ * and stores everything in Zustand (same shape as loadAndParseAudio).
+ */
+export async function loadFromFile(file) {
+  const AudioContext = window.AudioContext || window.webkitAudioContext
+  const audioCtx = new AudioContext()
+
+  const arrayBuffer = await file.arrayBuffer()
+  const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer)
+
+  const trackLength = calcTrackLength(audioBuffer.duration)
+  const targets = await generateTrackData(audioBuffer, trackLength)
+
+  useStore.getState().set({
+    audioContext: audioCtx,
+    audioBuffer,
+    trackTargets: targets,
+    trackLength,
+    isLoaded: true,
+  })
+
+  return { audioCtx, audioBuffer, targets, trackLength }
+}

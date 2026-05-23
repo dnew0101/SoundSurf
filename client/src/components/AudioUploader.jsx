@@ -44,7 +44,7 @@ export const AudioUploader = () => {
                 <button
                     type="button"
                     onClick={() => inputRef.current && inputRef.current.click()}
-                    className="mt-3 px-4 py-2 bg-orange-500 text-black rounded-md font-semibold"
+                    className="mt-3 px-4 py-2 bg-[#33E0D7] text-black rounded-md font-semibold"
                 >
                     Choose File
                 </button>

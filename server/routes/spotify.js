@@ -55,4 +55,12 @@ router.get("/features/:trackId", spotifyController.getAudioFeatures);
  */
 router.get("/preview/:trackId", spotifyController.getPreviewUrl);
 
+/**
+ * Return Spotify OAuth config (clientId, redirectUri, scopes)
+ * so the client can build the authorize URL without exposing secrets.
+ * @route GET /api/spotify/config
+ * @returns {object} { clientId, redirectUri, scopes }
+ */
+router.get("/config", spotifyController.getConfig);
+
 module.exports = router;

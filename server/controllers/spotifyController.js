@@ -237,10 +237,23 @@ const getPreviewUrl = async (req, res) => {
   }
 };
  
+/**
+ * Return Spotify OAuth configuration for the client.
+ * The client needs clientId and redirectUri to build the authorize URL.
+ */
+const getConfig = async (req, res) => {
+  res.json({
+    clientId: process.env.SPOTIFY_CLIENT_ID,
+    redirectUri: process.env.SPOTIFY_REDIRECT_URI,
+    scopes: "user-read-private user-read-email streaming",
+  });
+};
+
 module.exports = {
   getToken,
   refreshToken,
   searchTracks,
   getAudioFeatures,
   getPreviewUrl,
+  getConfig,
 };
