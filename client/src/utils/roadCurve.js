@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { ROAD_WIDTH } from '../shared/road'
 
 export function getRoadPoint(t, trackLength, roadParams, audioParams) {
-  const intensity = audioParams?.intensityScalar?.current ?? 2
+  const intensity = audioParams?.intensityScalar?.current ?? 4
   const bpm = audioParams?.bpm?.current ?? 120
 
   const hAmp = (roadParams?.horizontalAmp ?? 100) * intensity
