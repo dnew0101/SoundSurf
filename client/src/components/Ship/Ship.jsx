@@ -6,9 +6,9 @@ import * as THREE from 'three'
 import { useGLTF } from '@react-three/drei'
 import useStore from '../../shared/store'
 import { getLaneX } from '../../shared/road'
-import { ROAD_LENGTH, getRoadY } from '../../utils/distortion'
+import { getRoadY } from '../../utils/distortion'
+import { roadState } from '../../utils/roadState'
 
-const trackLength = useStore.getState().trackLength
 const _point = new THREE.Vector3()
 const _quaternion = new THREE.Quaternion()
 const _tangent = new THREE.Vector3()
@@ -26,7 +26,7 @@ const Ship = ({ position, rotation, ...props }) => {
   const ship = useStore((s) => s.ship)
   const shipProgress = useStore((s) => s.shipProgress)
   const currentLane = useStore((s) => s.currentLane)
-  const trackLength = useStore((s) => s.trackLength)  // ← moved here
+  const trackLength = useStore((s) => s.trackLength)
   const audioContext = useStore((s) => s.audioContext)
   const audioBuffer = useStore((s) => s.audioBuffer)
   const audioStartTime = useStore((s) => s.audioStartTime)
@@ -70,8 +70,7 @@ const Ship = ({ position, rotation, ...props }) => {
       currentLane.current = THREE.MathUtils.lerp(currentLane.current, targetLane.current, 0.1)
 
       const roadZ = -shipProgress.current
-      const progress = Math.abs(roadZ) / ROAD_LENGTH
-      const roadY = getRoadY(progress, time)
+      const roadY = roadState.currentY
       const laneX = getLaneX(currentLane.current)
 
       _point.set(laneX, roadY + SHIP_RIDE_HEIGHT, roadZ)
@@ -79,7 +78,7 @@ const Ship = ({ position, rotation, ...props }) => {
 
       _ahead.set(
         laneX,
-        getRoadY(Math.abs(roadZ - 1.5) / ROAD_LENGTH, time) + SHIP_RIDE_HEIGHT,
+        getRoadY(Math.abs(roadZ - 1.5) / trackLength, roadState.time) + SHIP_RIDE_HEIGHT,
         roadZ - 1.5,
       )
       _tangent.copy(_ahead).sub(_point).normalize()
@@ -96,6 +95,13 @@ const Ship = ({ position, rotation, ...props }) => {
   return (
     <Suspense fallback={null}>
       <group ref={ship} position={position} rotation={rotation} {...props}>
+        <pointLight
+          position={[2.2, 0.8, 1.6]}
+          intensity={5}
+          distance={18}
+          decay={2}
+          color="#9fefff"
+        />
         <group scale={0.015} rotation={[0, Math.PI, 0]}>
           <mesh name="Cone001_01" geometry={nodes['Cone001_01_-_Default_0'].geometry} material={materials['01_-_Default']} />
           <mesh name="Cone001_02" geometry={nodes['Cone001_02_-_Default_0'].geometry} material={materials['02_-_Default']} />

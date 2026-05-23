@@ -5,7 +5,8 @@ import * as THREE from 'three'
 import useStore from '@/shared/store'
 import { distance } from '@/utils/distance'
 import { getLaneX } from '../../shared/road'
-import { ROAD_LENGTH, getRoadY } from '../../utils/distortion'
+import { getRoadY } from '../../utils/distortion'
+import { roadState } from '../../utils/roadState'
 
 const _spawnPoint = new THREE.Vector3()
 const TARGET_RIDE_HEIGHT = 0.55
@@ -13,8 +14,8 @@ const TARGET_RIDE_HEIGHT = 0.55
 const TargetInstance = ({ lane, z, color }) => {
   const ref = useRef()
   const materialRef = useRef()
-  
   const ship = useStore((s) => s.ship)
+  const trackLength = useStore((s) => s.trackLength)
   const incrementScore = useStore((s) => s.setScore)
   const addExplosion = useStore((s) => s.addExplosion)
   const resetHitStreak = useStore((s) => s.resetHitStreak)
@@ -26,9 +27,9 @@ const TargetInstance = ({ lane, z, color }) => {
       return
     }
 
-    const time = state.clock.getElapsedTime()
+    const time = roadState.time || state.clock.getElapsedTime()
     const laneX = getLaneX(lane)
-    const roadY = getRoadY(Math.abs(z) / ROAD_LENGTH, time)
+    const roadY = getRoadY(Math.abs(z) / trackLength, roadState.time || time)
 
     _spawnPoint.set(laneX, roadY + TARGET_RIDE_HEIGHT, z)
     ref.current.position.copy(_spawnPoint)

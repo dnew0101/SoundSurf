@@ -1,8 +1,8 @@
 // utils/generateTrackData.js
 import Meyda from 'meyda'
 
-const LOUDNESS_THRESHOLD = 15  // tune — higher = fewer targets
-const MIN_GAP_SECONDS = 0.1    // prevent targets too close together
+const LOUDNESS_THRESHOLD = 30  // tune — higher = fewer targets
+const MIN_GAP_SECONDS = 1    // prevent targets too close together
 
 function timeToZ(timeSeconds, songDuration, trackLength) {
   return -(timeSeconds / songDuration) * trackLength

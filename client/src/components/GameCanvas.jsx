@@ -8,13 +8,15 @@ import Targets from './Targets/Targets'
 import AudioController from './AudioController'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import { getRoadY } from '../utils/distortion'
+import { roadState } from '../utils/roadState'
 
 const _camPos = new THREE.Vector3()
 const _lookAt = new THREE.Vector3()
-const trackLength = useStore.getState().trackLength
 
 const Scene = () => {
   const ship = useStore((s) => s.ship)
+  const shipProgress = useStore((s) => s.shipProgress)
+  const trackLength = useStore((s) => s.trackLength)
   const isLoaded = useStore((s) => s.isLoaded)
 
   useFrame(({ camera, clock }) => {
@@ -22,18 +24,21 @@ const Scene = () => {
 
     const shipPosition = ship.current.position
     const time = clock.getElapsedTime()
-    const shipRoadY = getRoadY(Math.abs(shipPosition.z) / trackLength, time)
+    const progress = Math.abs(shipProgress.current) / trackLength
+    roadState.time = time
+    roadState.progress = progress
+    roadState.currentY = getRoadY(progress, time)
     const lookZ = shipPosition.z - 20
 
     _camPos.set(
       shipPosition.x,
-      shipRoadY + 8,
+      roadState.currentY + 8,
       shipPosition.z + 12,
     )
 
     _lookAt.set(
       0,
-      getRoadY(Math.abs(lookZ) / trackLength, time),
+      getRoadY(Math.abs(lookZ) / trackLength, roadState.time),
       lookZ,
     )
 

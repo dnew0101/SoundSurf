@@ -3,31 +3,31 @@ import { useMemo, useRef } from 'react'
 import useStore from '../../shared/store'
 import * as THREE from 'three'
 import RoadShaderMaterial from '../../utils/shaders'
+import { getRoadY } from '../../utils/distortion'
+import { roadState } from '../../utils/roadState'
 import {
   ROAD_SEGMENTS_LENGTH,
   ROAD_SEGMENTS_WIDTH,
   ROAD_WIDTH,
 } from '../../shared/road'
-import { ROAD_LENGTH, getRoadY } from '../../utils/distortion'
 
 extend({ RoadShaderMaterial })
 
 const Track = () => {
     const ref = useRef()
     const meshRef = useRef()
-    const trackLength = useStore.getState().trackLength
     const start = useStore((store) => store.startGame)
-    const shipProgress = useStore((store) => store.shipProgress)
+    const trackLength = useStore((store) => store.trackLength)
 
 
     const geometry = useMemo(() => {
     return new THREE.PlaneGeometry(
         ROAD_WIDTH,
-        trackLength,        // ← dynamic
+    trackLength,
         ROAD_SEGMENTS_WIDTH,
         ROAD_SEGMENTS_LENGTH,
     )
-    }, [trackLength])
+  }, [trackLength])
 
     useFrame(({ clock }) => {
       const time = clock.getElapsedTime()
@@ -41,16 +41,16 @@ const Track = () => {
         }
 
       if (meshRef.current) {
-        const progress = shipProgress.current / ROAD_LENGTH
-        meshRef.current.position.y = getRoadY(progress, time)
+        meshRef.current.position.y = roadState.currentY
       }
     })
 
     return (
         <mesh
+            ref={meshRef}
             geometry={geometry}
             rotation={[-Math.PI / 2, 0, 0]}
-            position={[0, 0, -trackLength / 2]}  // ← dynamic
+          position={[0, 0, -trackLength / 2]}
         >
             <roadShaderMaterial
               ref={ref}
