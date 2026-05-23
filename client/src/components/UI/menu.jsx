@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import AudioUploader from '../AudioUploader'
-import SpotifySearch from './SpotifySearch'
+import JamendoSearch from './JamendoSearch'
 import useStore from '../../shared/store'
 import { loadFromFile } from '../../utils/audioLoader'
-import { useNavigate } from 'react-router-dom'
-import { loadSpotifyPreview } from '../../utils/spotifyClient'
+import { loadJamendoTrack } from '../../utils/jamendoClient'
 
-const TABS = ['upload', 'spotify']
+const TABS = ['upload', 'jamendo']
 
 const Menu = () => {
 	const [name, setName] = useState('')
@@ -15,13 +14,8 @@ const Menu = () => {
 	const [loadError, setLoadError] = useState(null)
 
 	const setUsername = useStore((s) => s.setUsername)
-	const setStartGame = useStore((s) => s.setStartGame)
 	const selectedTrack = useStore((s) => s.selectedTrack)
-	const selectedSpotifyTrack = useStore((s) => s.selectedSpotifyTrack)
-	const spotifyAccessToken = useStore((s) => s.spotifyAccessToken)
-	const set = useStore((s) => s.set)
-
-	const navigate = useNavigate()
+	const selectedJamendoTrack = useStore((s) => s.selectedJamendoTrack)
 
 	const handleStart = async () => {
 		setUsername(name || 'Guest')
@@ -37,10 +31,10 @@ const Menu = () => {
 				return
 			}
 			setLoading(false)
-		} else if (tab === 'spotify' && selectedSpotifyTrack?.id && spotifyAccessToken) {
+		} else if (tab === 'jamendo' && selectedJamendoTrack?.audio) {
 			setLoading(true)
 			try {
-				await loadSpotifyPreview(selectedSpotifyTrack.id, spotifyAccessToken)
+				await loadJamendoTrack(selectedJamendoTrack)
 			} catch (e) {
 				setLoadError(e.message)
 				setLoading(false)
@@ -51,17 +45,13 @@ const Menu = () => {
 			setLoadError(
 				tab === 'upload'
 					? 'Select an audio file first'
-					: 'No track selected'
+					: 'Search and select a track first'
 			)
 			return
 		}
-
-		// Once the audio is loaded into the store, mark menu closed and navigate to game
-		setStartGame(false)
-		navigate('/game')
 	}
 
-	const hasSelection = tab === 'upload' ? !!selectedTrack?.file : !!selectedSpotifyTrack?.id
+	const hasSelection = tab === 'upload' ? !!selectedTrack?.file : !!selectedJamendoTrack?.audio
 
 	return (
 		    <div className="min-h-screen flex items-center justify-center bg-black relative z-50">
@@ -103,13 +93,13 @@ const Menu = () => {
 											: 'text-slate-500 hover:text-slate-300'
 									}`}
 								>
-									{t === 'upload' ? 'Upload Track' : 'Spotify'}
+							{t === 'upload' ? 'Upload Track' : 'Jamendo'}
 								</button>
 							))}
 						</div>
 
-						<div className="mt-4 flex flex-col items-center">
-							{tab === 'upload' ? <AudioUploader /> : <SpotifySearch />}
+						<div className="mt-4">
+							{tab === 'upload' ? <AudioUploader /> : <JamendoSearch />}
 						</div>
 					</section>
 
@@ -119,7 +109,7 @@ const Menu = () => {
 							<li>
 								{tab === 'upload'
 									? 'Drop a music file (MP3, WAV) to generate your track.'
-									: 'Search for a song on Spotify and play its 30s preview.'}
+									: 'Search Jamendo\'s catalog and play any full track.'}
 							</li>
 							<li>Use arrow / lane controls to hit obstacles on beat.</li>
 							<li>Your username will appear on the HUD.</li>

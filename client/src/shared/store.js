@@ -26,10 +26,7 @@ const useStore = create((set, get) => ({
   router: null,
   connected: false,
   spotifyWebPlayer: null,
-  spotifyAccessToken: null,
-  spotifyRefreshToken: null,
-  spotifyTokenExpiry: null,
-  selectedSpotifyTrack: null,
+  selectedJamendoTrack: null,
   currentTrack: null,
   deviceId: null,
   explosions: [],
@@ -75,14 +72,6 @@ const useStore = create((set, get) => ({
     endGame: true,
     startGame: false,
   })),
-
-  setSpotifyAuth: (authData) => set({
-    spotifyAccessToken: authData.accessToken,
-    spotifyRefreshToken: authData.refreshToken || null,
-    spotifyTokenExpiry: authData.expiresIn
-      ? Date.now() + authData.expiresIn * 1000
-      : null,
-  }),
 }))
 
 export default useStore

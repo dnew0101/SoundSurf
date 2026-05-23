@@ -11,7 +11,7 @@ const http = require("http");
 const dotenv = require("dotenv");
 const corsMiddleware = require("./middleware/cors");
 const gameRoutes = require("./routes/game");
-const spotifyRoutes = require("./routes/spotify");
+const jamendoRoutes = require("./routes/jamendo");
 const scoresRoutes = require("./routes/scores");
 const { initGameSocket } = require("./websocket/gameSocket");
 
@@ -26,7 +26,7 @@ app.use(express.json());
 
 /* ─── API Routes */
 app.use("/api/game", gameRoutes);
-app.use("/api/spotify", spotifyRoutes);
+app.use("/api/jamendo", jamendoRoutes);
 app.use("/api/scores", scoresRoutes);
 
 /**
