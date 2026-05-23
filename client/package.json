@@ -17,6 +17,7 @@
     "react-dom": "^19.2.6",
     "tailwindcss": "^4.3.0",
     "three": "^0.184.0",
+    "vite-plugin-glsl": "^1.6.0",
     "zustand": "^5.0.13"
   },
   "devDependencies": {
