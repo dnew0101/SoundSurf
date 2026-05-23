@@ -102,6 +102,7 @@ export default function GameCanvas() {
 
   return (
     <>
+     <HUD />
       <Canvas
         style={{ position: 'fixed', inset: 0, zIndex: 0 }}
         gl={{ antialias: true }}
