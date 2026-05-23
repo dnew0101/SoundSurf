@@ -6,6 +6,7 @@ import Track from './Track/Track'
 import AnimatedShip from './Ship/AnimatedShip'
 import Targets from './Targets/Targets'
 import AudioController from './AudioController'
+import TrackEnd from './UI/TrackEnd'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import { roadState } from '../utils/roadState'
 import { getRoadPoint, getRoadFrame } from '../utils/roadCurve'
@@ -23,6 +24,7 @@ const Scene = () => {
   const isLoaded = useStore((s) => s.isLoaded)
 
   const frozenRoadParams = useStore((s) => s.frozenRoadParams)
+  const endGame = useStore((s) => s.endGame)
 
   useFrame(({ camera }) => {
     if (!ship.current) return
@@ -84,20 +86,29 @@ const Scene = () => {
 
       <fog attach="fog" color="black" near={20} far={700} />
       <Stars radius={120} count={600} />
+
+      {isLoaded && !endGame && (
+        <mesh position={new THREE.Vector3(0, 3, -trackLength)}>
+          <sphereGeometry args={[3, 24, 24]} />
+          <meshBasicMaterial color="#33E0D7" wireframe />
+        </mesh>
+      )}
     </>
   )
 }
 
 export default function GameCanvas() {
+  const endGame = useStore((s) => s.endGame)
+
   return (
     <>
-      <HUD />
       <Canvas
         style={{ position: 'fixed', inset: 0, zIndex: 0 }}
         gl={{ antialias: true }}
       >
         <Scene />
       </Canvas>
+      {endGame && <TrackEnd />}
     </>
   )
 }

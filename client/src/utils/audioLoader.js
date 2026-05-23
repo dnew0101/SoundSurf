@@ -1,7 +1,18 @@
-// utils/AudioLoader.js
 import useStore from '@/shared/store'
 import { generateTrackData } from '@/utils/generateTrackData'
-import { calcTrackLength } from '@/shared/constants'  // ← function not constant
+import { calcTrackLength, setBassScalar } from '@/shared/constants'
+
+async function loadAndStore(audioBuffer) {
+  const TEMP_LENGTH = 500
+  const { targets, bassScalar } = await generateTrackData(audioBuffer, TEMP_LENGTH)
+  setBassScalar(bassScalar)
+  const trackLength = calcTrackLength(audioBuffer.duration)
+  const zRatio = trackLength / TEMP_LENGTH
+  for (const t of targets) {
+    t.z *= zRatio
+  }
+  return { targets, trackLength }
+}
 
 export async function loadAndParseAudio(mp3Url) {
   const AudioContext = window.AudioContext || window.webkitAudioContext
@@ -11,28 +22,19 @@ export async function loadAndParseAudio(mp3Url) {
   const arrayBuffer = await response.arrayBuffer()
   const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer)
 
-  // Derive track length from actual song duration
-  const trackLength = calcTrackLength(audioBuffer.duration)
-
-  // Generate targets using the real track length
-  const targets = await generateTrackData(audioBuffer, trackLength)
+  const { targets, trackLength } = await loadAndStore(audioBuffer)
 
   useStore.getState().set({
     audioContext: audioCtx,
-    audioBuffer: audioBuffer,
+    audioBuffer,
     trackTargets: targets,
-    trackLength: trackLength,   // ← store dynamic length
+    trackLength,
     isLoaded: true,
   })
 
   return { audioCtx, audioBuffer, targets, trackLength }
 }
 
-/**
- * Load a user-uploaded File object (from <input type="file"> or drag-and-drop).
- * Reads the file as ArrayBuffer, decodes it, runs Meyda analysis,
- * and stores everything in Zustand (same shape as loadAndParseAudio).
- */
 export async function loadFromFile(file) {
   const AudioContext = window.AudioContext || window.webkitAudioContext
   const audioCtx = new AudioContext()
@@ -40,8 +42,7 @@ export async function loadFromFile(file) {
   const arrayBuffer = await file.arrayBuffer()
   const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer)
 
-  const trackLength = calcTrackLength(audioBuffer.duration)
-  const targets = await generateTrackData(audioBuffer, trackLength)
+  const { targets, trackLength } = await loadAndStore(audioBuffer)
 
   useStore.getState().set({
     audioContext: audioCtx,

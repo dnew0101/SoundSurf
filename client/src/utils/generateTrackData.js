@@ -2,8 +2,9 @@ import Meyda from 'meyda'
 import { bpmToColor, roadParams } from './distortion'
 import * as THREE from 'three'
 
-const LOUDNESS_THRESHOLD = 15
-const MIN_GAP_SECONDS = 0.5
+const TRANSIENT_DELTA = 4
+const MIN_ABSOLUTE = 6
+const MIN_GAP_SECONDS = 0.2
 
 function timeToZ(timeSeconds, songDuration, trackLength) {
   return -(timeSeconds / songDuration) * trackLength
@@ -25,6 +26,8 @@ export async function generateTrackData(audioBuffer, trackLength) {
   let sumTotal = 0
   let chunksWithFeatures = 0
 
+  let prevIntensity = 0
+
   for (let i = 0; i + BUFFER_SIZE < channelData.length; i += BUFFER_SIZE) {
     const chunk = channelData.slice(i, i + BUFFER_SIZE)
 
@@ -35,6 +38,8 @@ export async function generateTrackData(audioBuffer, trackLength) {
 
     const timeSeconds = i / sampleRate
     const intensity = features.loudness.total ?? 0
+    const delta = intensity - prevIntensity
+    prevIntensity = intensity
 
     const specific = features.loudness.specific
     if (specific && specific.length >= 24) {
@@ -45,7 +50,8 @@ export async function generateTrackData(audioBuffer, trackLength) {
       chunksWithFeatures++
     }
 
-    if (intensity < LOUDNESS_THRESHOLD) continue
+    if (delta < TRANSIENT_DELTA) continue
+    if (intensity < MIN_ABSOLUTE) continue
     if (timeSeconds - lastTargetTime < MIN_GAP_SECONDS) continue
 
     lastTargetTime = timeSeconds
@@ -71,12 +77,15 @@ export async function generateTrackData(audioBuffer, trackLength) {
     t.color = '#' + baseColor.getHexString()
   }
 
+  let bassScalar = 1
   if (chunksWithFeatures > 0) {
     const avgLow  = sumLow / chunksWithFeatures
     const avgMid  = sumMid / chunksWithFeatures
     const avgTotal = sumTotal / chunksWithFeatures
     const normalizedLoudness = Math.min(avgTotal / 80, 1.0)
     const intensity = 1 + normalizedLoudness * 1.2
+
+    bassScalar = 1 + Math.min(avgLow / 12, 1)
 
     const hAmp = THREE.MathUtils.clamp(15 + avgMid * 80 + intensity * 30, 20, 120)
     const vAmp = THREE.MathUtils.clamp(20 + avgLow * 120 + normalizedLoudness * 80, 30, 250)
@@ -88,5 +97,5 @@ export async function generateTrackData(audioBuffer, trackLength) {
     roadParams.amp = normalizedLoudness * 8
   }
 
-  return targets
+  return { targets, bassScalar }
 }
