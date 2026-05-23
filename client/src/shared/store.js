@@ -59,6 +59,7 @@ const useStore = create((set, get) => ({
       hitStreak: state.hitStreak + 1,
       streakMultiplier,
     }))
+      console.log("Score updated:", get().score)
   },
 
   addExplosion: (positionX) => {
