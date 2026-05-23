@@ -7,57 +7,64 @@ import AnimatedShip from './Ship/AnimatedShip'
 import Targets from './Targets/Targets'
 import AudioController from './AudioController'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
-import { getRoadY } from '../utils/distortion'
 import { roadState } from '../utils/roadState'
+import { getRoadPoint, getRoadFrame } from '../utils/roadCurve'
+import { roadParams } from '../utils/distortion'
 
 const _camPos = new THREE.Vector3()
-const _lookAt = new THREE.Vector3()
+const _lookTarget = new THREE.Vector3()
 
 const Scene = () => {
   const ship = useStore((s) => s.ship)
   const shipProgress = useStore((s) => s.shipProgress)
   const trackLength = useStore((s) => s.trackLength)
+  const audioParams = useStore((s) => s.audioParams)
   const isLoaded = useStore((s) => s.isLoaded)
 
-  useFrame(({ camera, clock }) => {
+  const frozenRoadParams = useStore((s) => s.frozenRoadParams)
+
+  useFrame(({ camera }) => {
     if (!ship.current) return
 
-    const shipPosition = ship.current.position
-    const time = clock.getElapsedTime()
+    const activeRp = frozenRoadParams || roadParams
+    const activeAp = frozenRoadParams
+      ? { bpm: { current: frozenRoadParams.bpm }, intensityScalar: { current: frozenRoadParams.intensityScalar } }
+      : audioParams
+
     const progress = Math.abs(shipProgress.current) / trackLength
-    roadState.time = time
-    roadState.progress = progress
-    roadState.currentY = getRoadY(progress, time)
-    const lookZ = shipPosition.z - 20
+    const clamped = Math.min(Math.max(progress, 0), 1)
+
+    roadState.progress = clamped
+
+    const shipPos = ship.current.position
+
+    const lookProgress = Math.min(clamped + 0.06, 1)
+    const lookPoint = getRoadPoint(lookProgress, trackLength, activeRp, activeAp)
+
+    const camProgress = Math.max(clamped - 0.01, 0)
+    const camFrame = getRoadFrame(camProgress, trackLength, activeRp, activeAp, roadState.currentNormal)
 
     _camPos.set(
-      shipPosition.x,
-      roadState.currentY + 8,
-      shipPosition.z + 12,
+      shipPos.x - camFrame.tangent.x * 22 + camFrame.normal.x * 12,
+      shipPos.y - camFrame.tangent.y * 22 + camFrame.normal.y * 12,
+      shipPos.z - camFrame.tangent.z * 22 + camFrame.normal.z * 12,
     )
 
-    _lookAt.set(
-      0,
-      getRoadY(Math.abs(lookZ) / trackLength, roadState.time),
-      lookZ,
-    )
+    _lookTarget.set(lookPoint.x, lookPoint.y, lookPoint.z)
 
     camera.position.copy(_camPos)
-    camera.lookAt(_lookAt)
+    camera.lookAt(_lookTarget)
   })
 
   return (
     <>
-      {/* Headless Audio Engine */}
       {isLoaded && <AudioController />}
 
-      {/* Lighting */}
       <ambientLight intensity={1} />
       <directionalLight position={[10, 20, 10]} intensity={2.5} />
       <pointLight position={[0, 10, 0]} intensity={1} />
       <color attach="background" args={['#000000']} />
 
-      {/* Camera */}
       <PerspectiveCamera
         fov={75}
         near={0.5}
@@ -66,7 +73,6 @@ const Scene = () => {
         makeDefault
        />
 
-      {/* Scene */}
       <Track />
       <AnimatedShip position={[0, 0, 0]} rotation={[0, 0, 0]} />
       <Targets />
@@ -75,7 +81,6 @@ const Scene = () => {
         <Bloom intensity={1.8} luminanceThreshold={0.15} luminanceSmoothing={0.9} mipmapBlur />
       </EffectComposer>
 
-      {/* Atmosphere */}
       <fog attach="fog" color="black" near={20} far={700} />
       <Stars radius={120} count={600} />
     </>

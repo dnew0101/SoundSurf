@@ -4,6 +4,10 @@ export const roadParams = {
   freq: 1.0,
   amp: 0.0,
   timeScale: 0.5,
+  horizontalAmp: 50,
+  horizontalFreq: 0.8,
+  verticalAmp: 120,
+  verticalFreq: 0.5,
 }
 
 let smoothedBPM = 120
@@ -49,6 +53,14 @@ export function processAudioFrame(features, audioParams, time) {
   roadParams.amp = THREE.MathUtils.lerp(roadParams.amp, normalizedLoudness * 8, 0.08)
   roadParams.freq = 1.5
 
+  // Drive horizontal curves from mid/high frequency content + intensity
+  roadParams.horizontalAmp = THREE.MathUtils.lerp(roadParams.horizontalAmp, 15 + mid * 80 + smoothedIntensity * 30, 0.08)
+  roadParams.horizontalFreq = THREE.MathUtils.lerp(roadParams.horizontalFreq, 0.4 + mid * 2.0 + normalizedLoudness * 0.6, 0.04)
+
+  // Drive vertical hills from low frequency content + overall loudness
+  roadParams.verticalAmp = THREE.MathUtils.lerp(roadParams.verticalAmp, 20 + low * 120 + normalizedLoudness * 80, 0.08)
+  roadParams.verticalFreq = THREE.MathUtils.lerp(roadParams.verticalFreq, 0.2 + normalizedLoudness * 0.8 + low * 1.5, 0.04)
+
   return { 
     loudnessTotal, 
     centroid, 
@@ -57,4 +69,14 @@ export function processAudioFrame(features, audioParams, time) {
     mid, 
     high 
 }
+}
+
+const _bpmColor = new THREE.Color()
+const _bpmCyan = new THREE.Color('#00ffff')
+const _bpmRed = new THREE.Color('#ff1030')
+
+export function bpmToColor(bpm) {
+  const t = Math.min(Math.max((bpm - 80) / 120, 0), 1)
+  _bpmColor.copy(_bpmCyan).lerp(_bpmRed, t)
+  return _bpmColor
 }

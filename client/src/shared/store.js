@@ -11,6 +11,7 @@ const newGameState = {
   startGame: true,
   username: null,
   audioAnalysis: null,
+  frozenRoadParams: null,
   endGame: false,
   isLoaded: false,
   trackTargets: [],
@@ -47,7 +48,8 @@ const useStore = create((set, get) => ({
   setAudioAnalysis: (features) => set({ audioAnalysis: features }),
   setTrackLength: (len) => set({ trackLength: len }),  // ← add this
 
-  resetHitStreak: () => set(() => ({ hitStreak: 0 })),
+    resetHitStreak: () => set(() => ({ hitStreak: 0 })),
+    setFrozenRoadParams: (params) => set({ frozenRoadParams: params }),
 
   setScore: () => {
     const streak = Math.floor(get().hitStreak / 10)

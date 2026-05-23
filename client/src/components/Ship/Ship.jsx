@@ -1,4 +1,3 @@
-// components/Ship/Ship.js
 import sceneUrl from '../../assets/scene.gltf?url'
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useRef, Suspense } from 'react'
@@ -6,14 +5,14 @@ import * as THREE from 'three'
 import { useGLTF } from '@react-three/drei'
 import useStore from '../../shared/store'
 import { getLaneX } from '../../shared/road'
-import { getRoadY } from '../../utils/distortion'
+import { roadParams } from '../../utils/distortion'
 import { roadState } from '../../utils/roadState'
+import { getRoadPoint, getRoadFrame } from '../../utils/roadCurve'
 
 const _point = new THREE.Vector3()
 const _quaternion = new THREE.Quaternion()
-const _tangent = new THREE.Vector3()
+const _rollQuat = new THREE.Quaternion()
 const _forward = new THREE.Vector3(0, 0, -1)
-const _ahead = new THREE.Vector3()
 const SHIP_RIDE_HEIGHT = 1.0
 
 const _sceneBase = sceneUrl.substring(0, sceneUrl.lastIndexOf('/') + 1)
@@ -27,13 +26,17 @@ const Ship = ({ position, rotation, ...props }) => {
   const shipProgress = useStore((s) => s.shipProgress)
   const currentLane = useStore((s) => s.currentLane)
   const trackLength = useStore((s) => s.trackLength)
+  const audioParams = useStore((s) => s.audioParams)
   const audioContext = useStore((s) => s.audioContext)
   const audioBuffer = useStore((s) => s.audioBuffer)
   const audioStartTime = useStore((s) => s.audioStartTime)
   const isPlaying = useStore((s) => s.isPlaying)
 
+  const frozenRoadParams = useStore((s) => s.frozenRoadParams)
   const targetLane = useRef(1)
   const loggedFrame = useRef(false)
+  const prevNormal = useRef(new THREE.Vector3(0, 1, 0))
+  const laneChange = useRef({ direction: 0, time: 0 })
   const { nodes, materials } = useGLTF(sceneUrl)
 
   useEffect(() => {
@@ -42,9 +45,11 @@ const Ship = ({ position, rotation, ...props }) => {
       switch (event.key) {
         case 'ArrowLeft':
           targetLane.current = Math.max(targetLane.current - step, 0)
+          laneChange.current = { direction: -1, time: Date.now() }
           break
         case 'ArrowRight':
           targetLane.current = Math.min(targetLane.current + step, 2)
+          laneChange.current = { direction: 1, time: Date.now() }
           break
         default:
           break
@@ -55,35 +60,51 @@ const Ship = ({ position, rotation, ...props }) => {
     return () => window.removeEventListener('keydown', handleKey)
   }, [])
 
-  useFrame(({ clock }) => {
-    const time = clock.getElapsedTime()
-    const pulse = 0.25 + Math.sin(time * 10) * 0.05
-
+  useFrame(() => {
     if (ship.current && isPlaying && audioStartTime !== null && audioBuffer) {
-      // 1. Calculate EXACT elapsed time since audio started
       const elapsedTime = audioContext.currentTime - audioStartTime
-
-      // 2. Map elapsed time directly to Z progress matching generateTrackData logic
-      // Math: progress = (time / duration) * trackLength
       shipProgress.current = (elapsedTime / audioBuffer.duration) * trackLength
 
       currentLane.current = THREE.MathUtils.lerp(currentLane.current, targetLane.current, 0.1)
 
-      const roadZ = -shipProgress.current
-      const roadY = roadState.currentY
-      const laneX = getLaneX(currentLane.current)
+      const progress = Math.abs(shipProgress.current) / trackLength
+      const clampedProgress = Math.min(Math.max(progress, 0), 1)
 
-      _point.set(laneX, roadY + SHIP_RIDE_HEIGHT, roadZ)
+      const activeRp = frozenRoadParams || roadParams
+      const activeAp = frozenRoadParams
+        ? { bpm: { current: frozenRoadParams.bpm }, intensityScalar: { current: frozenRoadParams.intensityScalar } }
+        : audioParams
+
+      const center = getRoadPoint(clampedProgress, trackLength, activeRp, activeAp)
+      const frame = getRoadFrame(clampedProgress, trackLength, activeRp, activeAp, prevNormal.current)
+      prevNormal.current.copy(frame.normal)
+
+      const laneOffset = getLaneX(currentLane.current)
+
+      _point.set(
+        center.x + laneOffset * frame.binormal.x + SHIP_RIDE_HEIGHT * frame.normal.x,
+        center.y + laneOffset * frame.binormal.y + SHIP_RIDE_HEIGHT * frame.normal.y,
+        center.z + laneOffset * frame.binormal.z + SHIP_RIDE_HEIGHT * frame.normal.z,
+      )
       ship.current.position.copy(_point)
 
-      _ahead.set(
-        laneX,
-        getRoadY(Math.abs(roadZ - 1.5) / trackLength, roadState.time) + SHIP_RIDE_HEIGHT,
-        roadZ - 1.5,
+      const m = new THREE.Matrix4()
+      m.set(
+        frame.binormal.x, frame.normal.x, -frame.tangent.x, 0,
+        frame.binormal.y, frame.normal.y, -frame.tangent.y, 0,
+        frame.binormal.z, frame.normal.z, -frame.tangent.z, 0,
+        0, 0, 0, 1,
       )
-      _tangent.copy(_ahead).sub(_point).normalize()
+      _quaternion.setFromRotationMatrix(m)
 
-      _quaternion.setFromUnitVectors(_forward, _tangent)
+      const rollElapsed = Date.now() - laneChange.current.time
+      if (rollElapsed < 300 && laneChange.current.direction !== 0) {
+        const t = rollElapsed / 300
+        const eased = t * t * (3 - 2 * t)
+        const rollAngle = laneChange.current.direction * eased * Math.PI * 2
+        _rollQuat.setFromAxisAngle(frame.tangent, rollAngle)
+        _quaternion.multiply(_rollQuat)
+      }
       ship.current.quaternion.copy(_quaternion)
 
       if (!loggedFrame.current) {
