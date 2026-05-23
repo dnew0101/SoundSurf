@@ -23,6 +23,8 @@ const useStore = create((set, get) => ({
     deviceId: null,
     explosions: [],
     ship: createRef(),
+    currentLane: { current: 1 },
+    shipProgress: { current: 0 },
 
     setStartGame: (val) => set({ startGame: val }),
 

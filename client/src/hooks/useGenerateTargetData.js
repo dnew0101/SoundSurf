@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { TARGET_COLORS, ROAD_LANES } from '@/shared/road'
 
 function getSourceLength(data) {
   if (Array.isArray(data)) return data.length
@@ -11,13 +12,16 @@ function getSourceLength(data) {
 export default function useGenerateTargetData(data, density = 0.3) {
   return useMemo(() => {
     const length = getSourceLength(data)
-    const count = Math.max(12, Math.round((length || 24) * density))
+    const count = Math.max(16, Math.round((length || 24) * density))
+    const spacing = 22
 
     return Array.from({ length: count }, (_, index) => {
-      const lane = (index % 5) - 2
+      const lane = Math.floor(Math.random() * ROAD_LANES)
+      const color = TARGET_COLORS[Math.floor(Math.random() * TARGET_COLORS.length)]
       return {
-        position: [lane * 2, 0, -(index * 12 + 20)],
-        offset: lane * 0.4,
+        lane,
+        color,
+        z: -(index * spacing + 35 + Math.random() * 30),
       }
     })
   }, [data, density])

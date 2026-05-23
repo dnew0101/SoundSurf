@@ -1,60 +1,69 @@
 import { TRACK_LENGTH } from '../../shared/constants'
 import { extend, useFrame } from '@react-three/fiber'
-import { useRef, useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import useStore from '../../shared/store'
 import * as THREE from 'three'
 import RoadShaderMaterial from '../../utils/shaders'
+import {
+  ROAD_SEGMENTS_LENGTH,
+  ROAD_SEGMENTS_WIDTH,
+  ROAD_WIDTH,
+} from '../../shared/road'
+import { ROAD_LENGTH, getRoadY } from '../../utils/distortion'
 
 extend({ RoadShaderMaterial })
 
-export function generateSplinePoints(count = 60) {
-    const points = []
-    let position = new THREE.Vector3(0, 0, 0)
-    let direction = new THREE.Vector3(0, 0, -1)
-
-    for (let i = 0; i < count; i++) {
-        points.push(position.clone())
-        direction.x += (Math.random() - 0.5) * 0.1
-        direction.y += (Math.random() - 0.5) * 0.05
-        direction.normalize()
-        position = position.clone().addScaledVector(direction, TRACK_LENGTH / count)
-    }
-
-    return points
-}
-
-export const roadCurve = new THREE.CatmullRomCurve3(generateSplinePoints(60))
-
 const Track = () => {
     const ref = useRef()
-    const meshRef = useRef()
+  const meshRef = useRef()
     const start = useStore((store) => store.startGame)
+  const shipProgress = useStore((store) => store.shipProgress)
 
 
     const geometry = useMemo(() => {
-        return new THREE.TubeGeometry(
-            roadCurve,
-            300,
-            5,
-            12,
-            false
+        const plane = new THREE.PlaneGeometry(
+          ROAD_WIDTH,
+          TRACK_LENGTH,
+          ROAD_SEGMENTS_WIDTH,
+          ROAD_SEGMENTS_LENGTH,
         )
+        return plane
     }, [])
 
     useFrame(({ clock }) => {
-        if (ref.current) {
-            const time = clock.getElapsedTime()
-            ref.current.uTime = time
+      const time = clock.getElapsedTime()
+
+      if (ref.current) {
+        ref.current.uTime = time
 
             if (start) {
                 ref.current.uFragmentTime = time
             }
         }
+
+      if (meshRef.current) {
+        const progress = shipProgress.current / ROAD_LENGTH
+        meshRef.current.position.y = getRoadY(progress, time)
+      }
     })
 
     return (
-        <mesh ref={meshRef} geometry={geometry}>
-            <roadShaderMaterial ref={ref} side={THREE.DoubleSide}/>
+        <mesh
+        ref={meshRef}
+          geometry={geometry}
+          rotation={[-Math.PI / 2, 0, 0]}
+          position={[0, 0, -TRACK_LENGTH / 2]}
+        >
+            <roadShaderMaterial
+              ref={ref}
+              side={THREE.DoubleSide}
+              transparent={false}
+              uLanes={3}
+              uLaneLineWidth={0.055}
+              uShoulderWidth={0.065}
+              uDashDensity={14}
+              uDashLength={0.4}
+            />
 
         </mesh>
     )

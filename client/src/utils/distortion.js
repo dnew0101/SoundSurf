@@ -1,11 +1,13 @@
-export function getDistVector3Tuple(progress, time, z, offset = [0, 0, 0]) {
-  const [xOffset = 0, yOffset = 0, zOffset = 0] = offset
-  const wave = Math.sin(time * 2 + progress * Math.PI * 4)
-  const drift = Math.cos(time * 1.5 + progress * 6)
+import * as THREE from 'three'
+import { TRACK_LENGTH } from '../shared/constants'
 
-  return [
-    xOffset + wave * 0.75,
-    yOffset + drift * 0.25,
-    z + zOffset,
-  ]
+export const ROAD_LENGTH = TRACK_LENGTH
+export const roadParams = {
+  freq: 1.0,
+  amp: 1.5,
+  timeScale: 0.5,
+}
+
+export function getRoadY(progressZ, time) {
+  return Math.sin(progressZ * Math.PI * roadParams.freq + time * roadParams.timeScale) * roadParams.amp
 }
