@@ -23,9 +23,7 @@ export default function App() {
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#000' }}>
       
-    <AudioUploader />
-      
-      {/* <GameCanvas />
+      <GameCanvas />
 
       {!isLoaded && (
         <div style={{
@@ -59,7 +57,7 @@ export default function App() {
       )}
       
       {isLoaded && <TestHUD />} 
-      */}
+     
     </div>
   )
 }
