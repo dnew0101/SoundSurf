@@ -21,10 +21,11 @@ export default function App() {
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#000' }}>
-      {/* The 3D Game Canvas */}
-      <GameCanvas />
+      
 
-      {/* Temporary Test UI Overlay */}
+      
+      {/* <GameCanvas />
+
       {!isLoaded && (
         <div style={{
           position: 'absolute',
@@ -56,8 +57,8 @@ export default function App() {
         </div>
       )}
       
-      {/* Quick HUD to verify score updates */}
-      {isLoaded && <TestHUD />}
+      {isLoaded && <TestHUD />} 
+      */}
     </div>
   )
 }
