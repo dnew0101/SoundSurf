@@ -1,4 +1,3 @@
-import { TRACK_LENGTH } from '../../shared/constants'
 import { extend, useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import useStore from '../../shared/store'
@@ -15,20 +14,20 @@ extend({ RoadShaderMaterial })
 
 const Track = () => {
     const ref = useRef()
-  const meshRef = useRef()
+    const meshRef = useRef()
+    const trackLength = useStore.getState().trackLength
     const start = useStore((store) => store.startGame)
-  const shipProgress = useStore((store) => store.shipProgress)
+    const shipProgress = useStore((store) => store.shipProgress)
 
 
     const geometry = useMemo(() => {
-        const plane = new THREE.PlaneGeometry(
-          ROAD_WIDTH,
-          TRACK_LENGTH,
-          ROAD_SEGMENTS_WIDTH,
-          ROAD_SEGMENTS_LENGTH,
-        )
-        return plane
-    }, [])
+    return new THREE.PlaneGeometry(
+        ROAD_WIDTH,
+        trackLength,        // ← dynamic
+        ROAD_SEGMENTS_WIDTH,
+        ROAD_SEGMENTS_LENGTH,
+    )
+    }, [trackLength])
 
     useFrame(({ clock }) => {
       const time = clock.getElapsedTime()
@@ -49,10 +48,9 @@ const Track = () => {
 
     return (
         <mesh
-        ref={meshRef}
-          geometry={geometry}
-          rotation={[-Math.PI / 2, 0, 0]}
-          position={[0, 0, -TRACK_LENGTH / 2]}
+            geometry={geometry}
+            rotation={[-Math.PI / 2, 0, 0]}
+            position={[0, 0, -trackLength / 2]}  // ← dynamic
         >
             <roadShaderMaterial
               ref={ref}

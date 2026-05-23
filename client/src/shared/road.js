@@ -1,5 +1,6 @@
-import { TRACK_LENGTH } from './constants'
+import useStore from '../shared/store'
 
+const trackLength = useStore.getState().trackLength
 export const ROAD_WIDTH = 30
 export const ROAD_LANES = 3
 export const ROAD_SEGMENTS_WIDTH = 24
@@ -34,6 +35,6 @@ export function getRoadHeightAtProgress(progress) {
 }
 
 export function getRoadHeightAtZ(z) {
-  const distance = ((-z) % TRACK_LENGTH + TRACK_LENGTH) % TRACK_LENGTH
-  return getRoadHeightAtProgress(distance / TRACK_LENGTH)
+  const distance = ((-z) % trackLength + trackLength) % trackLength
+  return getRoadHeightAtProgress(distance / trackLength)
 }

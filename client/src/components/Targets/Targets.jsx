@@ -1,23 +1,24 @@
-import { useMemo } from 'react'
-import { TRACK_LENGTH } from '@/shared/constants'
-import { TARGET_COLORS } from '@/shared/road'
-
+// components/Targets/Targets.js
+import useStore from '@/shared/store'
 import TargetInstance from './TargetInstances'
 
 const Targets = () => {
+  // Pull the actual parsed targets from your audio analyzer
+  const targets = useStore((state) => state.trackTargets)
+
+  if (!targets || targets.length === 0) return null
+
   return (
-    useMemo(() => Array.from({ length: 20 }, (_, index) => ({
-      lane: Math.floor(Math.random() * 3),
-      z: -(index * (TRACK_LENGTH / 20)),
-      color: TARGET_COLORS[Math.floor(Math.random() * TARGET_COLORS.length)],
-    })).map((target, index) => (
-      <TargetInstance
-        key={`target-${index}`}
-        lane={target.lane}
-        z={target.z}
-        color={target.color}
-      />
-    )), [])
+    <>
+      {targets.map((target, index) => (
+        <TargetInstance
+          key={`target-${index}`}
+          lane={target.lane}
+          z={target.z}
+          color={target.color}
+        />
+      ))}
+    </>
   )
 }
 

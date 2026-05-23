@@ -1,21 +1,20 @@
+// components/Ship/Ship.js
 import sceneUrl from '../../assets/scene.gltf?url'
 import { useFrame } from '@react-three/fiber'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, Suspense } from 'react'
 import * as THREE from 'three'
 import { useGLTF } from '@react-three/drei'
-import { Suspense } from 'react'
 import useStore from '../../shared/store'
-import { TRACK_LENGTH } from '../../shared/constants'
 import { getLaneX } from '../../shared/road'
 import { ROAD_LENGTH, getRoadY } from '../../utils/distortion'
 
+const trackLength = useStore.getState().trackLength
 const _point = new THREE.Vector3()
 const _quaternion = new THREE.Quaternion()
 const _tangent = new THREE.Vector3()
 const _forward = new THREE.Vector3(0, 0, -1)
 const _ahead = new THREE.Vector3()
 const SHIP_RIDE_HEIGHT = 1.0
-const SHIP_FORWARD_SPEED = 30
 
 const _sceneBase = sceneUrl.substring(0, sceneUrl.lastIndexOf('/') + 1)
 THREE.DefaultLoadingManager.setURLModifier((url) => {
@@ -23,29 +22,23 @@ THREE.DefaultLoadingManager.setURLModifier((url) => {
   return url
 })
 
-const Ship = ({
-  position,
-  rotation,
-  ...props
-}) => {
+const Ship = ({ position, rotation, ...props }) => {
   const ship = useStore((s) => s.ship)
   const shipProgress = useStore((s) => s.shipProgress)
   const currentLane = useStore((s) => s.currentLane)
+  const trackLength = useStore((s) => s.trackLength)  // ← moved here
+  const audioContext = useStore((s) => s.audioContext)
+  const audioBuffer = useStore((s) => s.audioBuffer)
+  const audioStartTime = useStore((s) => s.audioStartTime)
+  const isPlaying = useStore((s) => s.isPlaying)
+
   const targetLane = useRef(1)
   const loggedFrame = useRef(false)
-  const exhaustLeft = useRef()
-  const exhaustRight = useRef()
   const { nodes, materials } = useGLTF(sceneUrl)
-
-  useEffect(() => {
-    // Helps confirm the shared ship ref is attached before target/camera logic runs.
-    console.log('ship ref attached', ship?.current)
-  }, [ship])
 
   useEffect(() => {
     const handleKey = (event) => {
       const step = 1
-
       switch (event.key) {
         case 'ArrowLeft':
           targetLane.current = Math.max(targetLane.current - step, 0)
@@ -62,12 +55,17 @@ const Ship = ({
     return () => window.removeEventListener('keydown', handleKey)
   }, [])
 
-  useFrame(({ clock }, delta) => {
+  useFrame(({ clock }) => {
     const time = clock.getElapsedTime()
     const pulse = 0.25 + Math.sin(time * 10) * 0.05
 
-    if (ship.current) {
-      shipProgress.current += delta * SHIP_FORWARD_SPEED
+    if (ship.current && isPlaying && audioStartTime !== null && audioBuffer) {
+      // 1. Calculate EXACT elapsed time since audio started
+      const elapsedTime = audioContext.currentTime - audioStartTime
+
+      // 2. Map elapsed time directly to Z progress matching generateTrackData logic
+      // Math: progress = (time / duration) * trackLength
+      shipProgress.current = (elapsedTime / audioBuffer.duration) * trackLength
 
       currentLane.current = THREE.MathUtils.lerp(currentLane.current, targetLane.current, 0.1)
 
@@ -90,77 +88,22 @@ const Ship = ({
       ship.current.quaternion.copy(_quaternion)
 
       if (!loggedFrame.current) {
-        const shaderY = getRoadY(progress, time)
-        console.log('ship z:', ship.current.position.z.toFixed(2), 'progress:', progress.toFixed(3), 'y:', shaderY.toFixed(3))
         loggedFrame.current = true
       }
-    }
-
-    if (exhaustLeft.current && exhaustRight.current) {
-      exhaustLeft.current.scale.set(pulse, pulse, 0.2)
-      exhaustRight.current.scale.set(pulse, pulse, 0.2)
     }
   })
 
   return (
     <Suspense fallback={null}>
       <group ref={ship} position={position} rotation={rotation} {...props}>
-
-        <group
-          scale={0.015}
-          rotation={[0, Math.PI, 0]}
-        >
-          {/* Pass materials directly — keeps all textures intact */}
-          <mesh
-            name="Cone001_01"
-            geometry={nodes['Cone001_01_-_Default_0'].geometry}
-            material={materials['01_-_Default']}
-          />
-          <mesh
-            name="Cone001_02"
-            geometry={nodes['Cone001_02_-_Default_0'].geometry}
-            material={materials['02_-_Default']}
-          />
-          <mesh
-            name="Cone001_03"
-            geometry={nodes['Cone001_03_-_Default_0'].geometry}
-            material={materials['03_-_Default']}
-          />
-          <mesh
-            name="Cone001_07"
-            geometry={nodes['Cone001_07_-_Default_0'].geometry}
-            material={materials['07_-_Default']}
-          />
-          <mesh
-            name="Cone001_08"
-            geometry={nodes['Cone001_08_-_Default_0'].geometry}
-            material={materials['08_-_Default']}
-          />
-          <mesh
-            name="Cone001_09"
-            geometry={nodes['Cone001_09_-_Default_0'].geometry}
-            material={materials['09_-_Default']}
-          />
+        <group scale={0.015} rotation={[0, Math.PI, 0]}>
+          <mesh name="Cone001_01" geometry={nodes['Cone001_01_-_Default_0'].geometry} material={materials['01_-_Default']} />
+          <mesh name="Cone001_02" geometry={nodes['Cone001_02_-_Default_0'].geometry} material={materials['02_-_Default']} />
+          <mesh name="Cone001_03" geometry={nodes['Cone001_03_-_Default_0'].geometry} material={materials['03_-_Default']} />
+          <mesh name="Cone001_07" geometry={nodes['Cone001_07_-_Default_0'].geometry} material={materials['07_-_Default']} />
+          <mesh name="Cone001_08" geometry={nodes['Cone001_08_-_Default_0'].geometry} material={materials['08_-_Default']} />
+          <mesh name="Cone001_09" geometry={nodes['Cone001_09_-_Default_0'].geometry} material={materials['09_-_Default']} />
         </group>
-
-        <mesh
-          ref={exhaustLeft}
-          scale={[0.3, 0.3, 0.2]}
-          position={[-0.3, -1.5, 0]}
-        >
-          <dodecahedronGeometry args={[1.5, 0]} />
-          <meshBasicMaterial color="#FEEBC8" />
-        </mesh>
-
-        <mesh
-          ref={exhaustRight}
-          scale={[0.3, 0.3, 0.2]}
-          position={[0.3, -1.5, 0]}
-        >
-          <dodecahedronGeometry args={[1.5, 0]} />
-          <meshBasicMaterial color="#FEEBC8" />
-        </mesh>
-
       </group>
     </Suspense>
   )
