@@ -8,7 +8,7 @@ import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
 
 /**
- * Converts a video file to a mp3 file.
+ * Converts a video or audio file to a mp3 file.
  * @param {File} file - The video or audio file to convert.
  * @returns {Promise<string>} A promise that resolves to the converted mp3 file.
  */
