@@ -15,7 +15,7 @@ const newGameState = {
   trackTargets: [],
   isPlaying: false,
   audioStartTime: null,
-  trackLength: 500,   // default, overwritten on audio load
+  trackLength: 500,
 }
 
 const useStore = create((set, get) => ({
