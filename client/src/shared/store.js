@@ -9,6 +9,7 @@ const newGameState = {
   hitStreak: 0,
   streakMultiplier: 1,
   startGame: true,
+  username: null,
   audioAnalysis: null,
   endGame: false,
   isLoaded: false,
@@ -25,6 +26,10 @@ const useStore = create((set, get) => ({
   router: null,
   connected: false,
   spotifyWebPlayer: null,
+  spotifyAccessToken: null,
+  spotifyRefreshToken: null,
+  spotifyTokenExpiry: null,
+  selectedSpotifyTrack: null,
   currentTrack: null,
   deviceId: null,
   explosions: [],
@@ -40,6 +45,8 @@ const useStore = create((set, get) => ({
   audioBuffer: null,
 
   setStartGame: (val) => set({ startGame: val }),
+  setUsername: (name) => set({ username: name }),
+  setSelectedTrack: (track) => set({ selectedTrack: track }),
   setAudioAnalysis: (features) => set({ audioAnalysis: features }),
   setTrackLength: (len) => set({ trackLength: len }),  // ← add this
 
@@ -68,6 +75,14 @@ const useStore = create((set, get) => ({
     endGame: true,
     startGame: false,
   })),
+
+  setSpotifyAuth: (authData) => set({
+    spotifyAccessToken: authData.accessToken,
+    spotifyRefreshToken: authData.refreshToken || null,
+    spotifyTokenExpiry: authData.expiresIn
+      ? Date.now() + authData.expiresIn * 1000
+      : null,
+  }),
 }))
 
 export default useStore
