@@ -1,69 +1,33 @@
-// App.js (or your main wrapper)
 import { useState } from 'react'
 import GameCanvas from './components/GameCanvas'
-import { loadAndParseAudio } from './utils/AudioLoader'
+import Menu from './components/UI/menu'
+import { loadAndParseAudio } from './utils/audioLoader'
 import useStore from './shared/store'
 
 export default function App() {
   const [loading, setLoading] = useState(false)
   const isLoaded = useStore((s) => s.isLoaded)
+  const startGame = useStore((s) => s.startGame)
 
   const handleStartTest = async () => {
     setLoading(true)
     try {
-      // Because the file is in the public folder, we fetch it from the root path
       await loadAndParseAudio('/test-song.mp3')
     } catch (err) {
       console.error("Failed to load audio:", err)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#000' }}>
-      
-
-      
-      {/* <GameCanvas />
-
-      {!isLoaded && (
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          zIndex: 10,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          background: 'rgba(0,0,0,0.8)',
-          color: 'white',
-          flexDirection: 'column'
-        }}>
-          <button 
-            onClick={handleStartTest} 
-            disabled={loading}
-            style={{
-              padding: '20px 40px',
-              fontSize: '24px',
-              cursor: loading ? 'wait' : 'pointer',
-              background: loading ? '#555' : '#1db954',
-              color: 'white',
-              border: 'none',
-              borderRadius: '50px',
-              fontWeight: 'bold'
-            }}
-          >
-            {loading ? 'Analyzing Track...' : 'Play Test Song'}
-          </button>
-        </div>
-      )}
-      
-      {isLoaded && <TestHUD />} 
-      */}
+      {startGame ? <GameCanvas /> : <Menu />}
+      {isLoaded && <TestHUD />}
     </div>
   )
 }
 
-// Simple HUD to verify your hit detection is working
 function TestHUD() {
   const score = useStore((s) => s.score)
   const hitStreak = useStore((s) => s.hitStreak)

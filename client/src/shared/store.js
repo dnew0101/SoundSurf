@@ -9,6 +9,7 @@ const newGameState = {
   hitStreak: 0,
   streakMultiplier: 1,
   startGame: true,
+  username: null,
   audioAnalysis: null,
   endGame: false,
   isLoaded: false,
@@ -40,6 +41,8 @@ const useStore = create((set, get) => ({
   audioBuffer: null,
 
   setStartGame: (val) => set({ startGame: val }),
+  setUsername: (name) => set({ username: name }),
+  setSelectedTrack: (track) => set({ selectedTrack: track }),
   setAudioAnalysis: (features) => set({ audioAnalysis: features }),
   setTrackLength: (len) => set({ trackLength: len }),  // ← add this
 
