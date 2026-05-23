@@ -3,25 +3,27 @@ import { extend, useFrame } from '@react-three/fiber'
 import { useRef, useMemo } from 'react'
 import useStore from '../../shared/store'
 import * as THREE from 'three'
-import RoadShaderMaterial, { RoadShaderMaterialImpl } from '../../utils/shaders'
+import RoadShaderMaterial from '../../utils/shaders'
 
 extend({ RoadShaderMaterial })
 
-function generateSplinePoints( count = 60 ) {
+export function generateSplinePoints(count = 60) {
     const points = []
-    let position = new THREE.Vector3(0,0,0)
-    let direction = new THREE.Vector3(0,0,-1)
+    let position = new THREE.Vector3(0, 0, 0)
+    let direction = new THREE.Vector3(0, 0, -1)
 
-    for( let i = 0; i < count; i++) {
+    for (let i = 0; i < count; i++) {
         points.push(position.clone())
-        direction.x += (Math.random() - 0.5) *0.3
-        direction.y += (Math.random() - 0.5)*0.15
+        direction.x += (Math.random() - 0.5) * 0.1
+        direction.y += (Math.random() - 0.5) * 0.05
         direction.normalize()
         position = position.clone().addScaledVector(direction, TRACK_LENGTH / count)
     }
 
     return points
 }
+
+export const roadCurve = new THREE.CatmullRomCurve3(generateSplinePoints(60))
 
 const Track = () => {
     const ref = useRef()
@@ -30,12 +32,10 @@ const Track = () => {
 
 
     const geometry = useMemo(() => {
-        const points = generateSplinePoints(60)
-        const curve = new THREE.CatmullRomCurve3(points)
         return new THREE.TubeGeometry(
-            curve,
+            roadCurve,
             300,
-            1.5,
+            5,
             12,
             false
         )
@@ -49,17 +49,6 @@ const Track = () => {
             if (start) {
                 ref.current.uFragmentTime = time
             }
-        }
-    
-        if (meshRef.current) {
-            const position = meshRef.current.geometry.attributes.position
-            const t = performance.now() * 0.001
-            for (let i = 0; i< position.count; i++) {
-                const x = position.getX(i)
-                position.setY(i, position.getY(i) + Math.sin(x * 0.4 + t * 2) * 0.002)
-            }
-            position.needsUpdate = true
-
         }
     })
 

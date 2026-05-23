@@ -1,49 +1,57 @@
 import { Canvas, useFrame } from '@react-three/fiber'
+import { useMemo } from 'react'
+import { PerspectiveCamera, Stars } from '@react-three/drei'
 import * as THREE from 'three'
-import Ship from './Ship'
+import { TRACK_LENGTH } from '../shared/constants'
+import useStore from '../shared/store'
 import Track from './Track/Track'
-import { Suspense, useRef } from 'react'
-import { OrbitControls } from '@react-three/drei'
+import AnimatedShip from './Ship/AnimatedShip'
+import Targets from './Targets/Targets'
 
-// Separate component so useRef/useFrame work inside the Canvas context
-function Scene() {
-  const shipRef = useRef()
-  const exhaustLRef = useRef()
-  const exhaustRRef = useRef()
+const Scene = () => {
+  const ship = useStore((s) => s.ship)
+  const lookAt = useMemo(() => new THREE.Vector3(), [])
 
-  useFrame(({ clock }) => {
-    // Exhaust pulse animation
-    if (exhaustLRef.current && exhaustRRef.current) {
-      const pulse = Math.sin(clock.getElapsedTime() * 10) * 0.05 + 0.25
-      exhaustLRef.current.scale.set(pulse, pulse, 0.2)
-      exhaustRRef.current.scale.set(pulse, pulse, 0.2)
+  useFrame(({ camera }) => {
+    if (ship.current) {
+      console.log('ship ref value:', ship.current)
+      console.log('following ship at z:', ship.current.position.z)
+      lookAt.set(
+        ship.current.position.x,
+        ship.current.position.y,
+        ship.current.position.z - 50,
+      )
+      camera.position.x = ship.current.position.x
+      camera.position.y = ship.current.position.y + 2
+      camera.position.z = ship.current.position.z + 8
+      camera.lookAt(lookAt)
     }
   })
 
-    useFrame(({ camera }) => {
-        if (shipRef.current) {
-            camera.position.lerp(
-            new THREE.Vector3(
-                shipRef.current.position.x,
-                shipRef.current.position.y + 3,
-                shipRef.current.position.z + 10
-            ),
-            0.1  // lerp smoothing factor
-            )
-            camera.lookAt(shipRef.current.position)
-        }
-    })
-
   return (
     <>
+      {/* Lighting */}
+      <ambientLight intensity={1} />
+      <directionalLight position={[10, 20, 10]} intensity={2.5} />
+      <pointLight position={[0, 10, 0]} intensity={1} />
+
+      {/* Camera */}
+      <PerspectiveCamera
+        fov={75}
+        near={0.5}
+        far={TRACK_LENGTH}
+        position={[0, 2, 8]}
+        makeDefault
+       />
+
+      {/* Scene */}
       <Track />
-      <Ship
-        meshRef={shipRef}
-        exhaustLeftRef={exhaustLRef}
-        exhaustRightRef={exhaustRRef}
-        position={[0, 0.5, 0]}
-        rotation={[0, 0, 0]}
-      />
+      <AnimatedShip position={[0, 0, 0]} rotation={[0, 0, 0]} />
+      {/* <Targets /> */}
+
+      {/* Atmosphere */}
+      <fog attach="fog" color="black" near={10} far={400} />
+      <Stars radius={120} count={600} />
     </>
   )
 }
@@ -51,27 +59,10 @@ function Scene() {
 export default function GameCanvas() {
   return (
     <Canvas
-      camera={{ position: [0, 5, 12], fov: 60 }}  // behind and above the ship
-      onCreated={(state) => {
-        state.gl.toneMapping = THREE.ACESFilmicToneMapping
-        state.gl.outputColorSpace = THREE.SRGBColorSpace  // updated API
-        state.gl.toneMappingExposure = 1.6
-      }}
-      style={{
-        position: 'fixed',
-        zIndex: 0,
-        inset: 0,
-      }}
+      style={{ position: 'fixed', inset: 0, zIndex: 0 }}
+      gl={{ antialias: true }}
     >
-      <hemisphereLight skyColor={0xffffff} groundColor={0x222222} intensity={1} />
-      <ambientLight intensity={1} />
-      <directionalLight color={0xffffff} intensity={2.5} position={[10, 20, 10]} />
-
-      <Suspense fallback={null}>
-        <Scene />
-      </Suspense>
-
-      <OrbitControls makeDefault />
+      <Scene />
     </Canvas>
   )
 }
