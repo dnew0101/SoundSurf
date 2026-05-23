@@ -26,11 +26,16 @@ export default function AudioController() {
     // 4. Start playback and record the exact hardware time
     const startTime = audioContext.currentTime
     set({ audioStartTime: startTime, isPlaying: true })
-    
+
+    source.onended = () => {
+      useStore.getState().setEndGame()
+    }
+
     source.start(0)
 
     // Cleanup: Stop audio if component unmounts
     return () => {
+      source.onended = null
       source.stop()
       source.disconnect()
       set({ isPlaying: false, audioStartTime: null })
