@@ -53,7 +53,7 @@ const getToken = async (req, res) => {
             "Authorization": getBasicAuthHeader(),
             "Content-Type": "application/x-www-form-urlencoded"
         },
-        body: params.toString
+        body: params.toString()
     });
 
     const data = await response.json();
@@ -216,7 +216,7 @@ const getPreviewUrl = async (req, res) => {
  
     if (!accessToken) return res.status(401).json({ error: "Missing Spotify access token" });
  
-    const url = `${SPOTIFY_API_BASE}/tracks/${trackId}`;
+    const url = `${SPOTIFY_API_BASE_URL}/tracks/${trackId}`;
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -240,7 +240,7 @@ const getPreviewUrl = async (req, res) => {
 module.exports = {
   getToken,
   refreshToken,
-  searchTrack,
+  searchTracks,
   getAudioFeatures,
   getPreviewUrl,
 };

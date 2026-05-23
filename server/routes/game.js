@@ -8,7 +8,7 @@
 
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require("../controllers/gameController");
+const gameController = require("../controllers/gameController");
 const trackController = require("../controllers/trackController");
 
 /**

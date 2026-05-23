@@ -18,7 +18,7 @@ const spotifyController = require("../controllers/spotifyController");
  * @body  {string} redirectUri  - must match the registered redirect URI
  * @returns {object} accessToken, refreshToken, expiresIn
  */
-router.post("/token", spotifyController.getAccessToken);
+router.post("/token", spotifyController.getToken);
 
 /**
  * Refresh an expired Spotify access token.
@@ -26,7 +26,7 @@ router.post("/token", spotifyController.getAccessToken);
  * @body  {string} refreshToken - token received from /token
  * @returns {object} accessToken, expiresIn
  */
-router.post("/refresh", spotifyController.refreshAccessToken);
+router.post("/refresh", spotifyController.refreshToken);
 
 /**
  * Search for a track on Spotify.
@@ -45,7 +45,7 @@ router.get("/search", spotifyController.searchTracks);
  * @param {string} trackId - Spotify track ID
  * @returns {object} audio features including tempo, energy, valence
  */
-router.get("/features/:trackId", spotifyController.getTrackFeatures);
+router.get("/features/:trackId", spotifyController.getAudioFeatures);
 
 /**
  * Get the 30-second preview URL for a Spotify track.
@@ -53,6 +53,6 @@ router.get("/features/:trackId", spotifyController.getTrackFeatures);
  * @param {string} trackId - Spotify track ID
  * @returns {object} previewUrl
  */
-router.get("/preview/:trackId", spotifyController.getTrackPreview);
+router.get("/preview/:trackId", spotifyController.getPreviewUrl);
 
 module.exports = router;
