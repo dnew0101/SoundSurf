@@ -1,8 +1,9 @@
 // App.js (or your main wrapper)
 import { useState } from 'react'
 import GameCanvas from './components/GameCanvas'
-import { loadAndParseAudio } from './utils/AudioLoader'
+import { loadAndParseAudio } from './utils/audioLoader'
 import useStore from './shared/store'
+import { AudioUploader } from './components/AudioUploader'
 
 export default function App() {
   const [loading, setLoading] = useState(false)
@@ -22,7 +23,7 @@ export default function App() {
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#000' }}>
       
-
+    <AudioUploader />
       
       {/* <GameCanvas />
 
